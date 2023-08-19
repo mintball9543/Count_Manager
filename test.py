@@ -5,6 +5,10 @@ import csv
 import os
 
 file = "C:\count manager"
+os.makedirs(file, exist_ok = True)
+
+class ImageError(Exception):
+    pass
 
 def add_data():
     global file_path
@@ -14,15 +18,18 @@ def add_data():
         name = e_name.get()
         phone = e_phone_num.get()
         count = e_amount.get()
-        
+        if file_path == None: raise ImageError
     except ValueError:
         tk.messagebox.showerror("오류","품번은 숫자만 입력할 수 있습니다.")
+        return
+    except ImageError:
+        tk.messagebox.showerror("오류","이미지 등록 되어있지 않습니다.")
         return
     except:
         tk.messagebox.showerror("오류","데이터가 입력되지 않았습니다.")
         return
     
-    os.makedirs(file, exist_ok = True)
+
 
     with open(file+"\project.csv","a",encoding="utf-8",newline='') as f:
         data = csv.writer(f)
@@ -43,6 +50,9 @@ def search_data():
         
         for row in data:
             if row[0] == code:
+                clear_entry()
+                image_set()
+                e_code.insert(0,row[0])
                 e_name.insert(0,row[1])
                 e_phone_num.insert(0,row[2])
                 e_amount.insert(0,row[3])
@@ -73,7 +83,7 @@ def image_set():
     global canvas
     global file_path
 
-    canvas = tk.Canvas(win,width=1000,height=600)
+    canvas = tk.Canvas(win,width=700,height=600)
     canvas.place(x=30,y=155)
     img = None
     file_path = None
@@ -86,12 +96,18 @@ def image_input():
     global file_path
     global canvas
     
-    if file_path == None:    
-        file_path = filedialog.askopenfilename()
+    if file_path == None:
+        file_path = filedialog.askopenfilename(filetypes=[("이미지 파일","*.jpg;*.jpeg;*.png")])
+
     img = Image.open(file_path)
     img = ImageTk.PhotoImage(img)
     canvas.create_image(0,0,anchor=tk.NW,image = img)
 
+def image_delete():
+    global file_path
+
+    file_path = None
+    image_set()
 
 #pillow 쓰지 않았을 시 (이미지 첨부가 잘 안됨)
 """
@@ -103,7 +119,7 @@ def image_input():
 win = tk.Tk()
 
 win.title("재고관리 프로그램")
-win.geometry("1000x800+400+200")
+win.geometry("1400x900+400+200")
 win.resizable(True,True)
 image_set()
 header = ["품번","고객 이름","고객 전화번호","수량"]
@@ -112,7 +128,7 @@ for i in range(len(header)):
     l = tk.Label(win,text = header[i])
     l.grid(row=0,column=i*2)
 
-for i in range(1,6,2):
+for i in range(1,10,2):
     blank = tk.Label(win)
     blank.grid(row=1,column=i)
 
@@ -129,6 +145,10 @@ e_phone_num.grid(row=1,column=4)
 e_amount = tk.Entry(win,width = 5)
 e_amount.grid(row=1,column=6)
 
+#메모 기능구현 x
+text_memo = tk.Text(win,width=50,height = 33,font=("",15,""))
+text_memo.place(x=750 , y=155)
+
 #버튼 구현
 add = tk.Button(win,text="추가",command = add_data)
 add.grid(row=1,column=50)
@@ -138,6 +158,10 @@ search.grid(row=1,column=51)
 
 image = tk.Button(win, text="사진 등록", command = image_input)
 image.place(x=30,y=100)
+
+image_cancel = tk.Button(win, text="취소", command = image_delete)
+image_cancel.place(x=100,y=100)
+
 
 
 
