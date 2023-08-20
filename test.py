@@ -10,6 +10,30 @@ os.makedirs(file, exist_ok = True)
 class ImageError(Exception):
     pass
 
+#전체 데이터 목록 구현
+def all_data():
+    global new
+    
+    text = tk.Text(new,width=100,height=50)
+    text.bind("<Key>", lambda a: "break")
+    text.pack()
+    
+    with open(file+"\project.csv","r",encoding="utf-8",newline='') as f:
+        data = csv.reader(f)
+        text.insert("end","품번      고객 이름     고객 전화번호  수량\n\n")
+        for row in data:
+            row.pop()
+            text.insert("end","       ".join(row))
+            text.insert("end","\n")
+    
+#새로운 창
+def new_window():
+    global new
+    new = tk.Toplevel(width=1000,height=500)
+    new.geometry("900x600+600+300")
+    all_data()
+
+#데이터 추가
 def add_data():
     global file_path
        
@@ -40,6 +64,7 @@ def add_data():
     image_set()
     clear_entry()
 
+#데이터 검색
 def search_data():
     global file_path
     
@@ -65,7 +90,8 @@ def search_data():
             tk.messagebox.showerror("에러","검색 결과를 찾을 수 없습니다.")
 
         chk = False
-        
+
+
 def clear_entry():
     """
     엔트리 모두 삭제
@@ -103,6 +129,7 @@ def image_input():
     img = ImageTk.PhotoImage(img)
     canvas.create_image(0,0,anchor=tk.NW,image = img)
 
+#이미지 등록 취소
 def image_delete():
     global file_path
 
@@ -156,11 +183,15 @@ add.grid(row=1,column=50)
 search = tk.Button(win,text="검색",command = search_data)
 search.grid(row=1,column=51)
 
+all_button = tk.Button(win,text="전체 데이터",command = new_window)
+all_button.grid(row=1,column=52)
+
 image = tk.Button(win, text="사진 등록", command = image_input)
 image.place(x=30,y=100)
 
 image_cancel = tk.Button(win, text="취소", command = image_delete)
 image_cancel.place(x=100,y=100)
+
 
 
 
