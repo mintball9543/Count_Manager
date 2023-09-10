@@ -3,6 +3,9 @@ from tkinter import filedialog
 from PIL import Image, ImageTk
 import csv
 import os
+from tkcalendar import DateEntry
+from datetime import date
+
 
 file = "C:\count manager"
 os.makedirs(file, exist_ok = True)
@@ -17,7 +20,7 @@ def data_import():
         for row in csv.reader(f):
             try:
                 if row[5] != None: pass
-            except: row.append("")
+            except: row.append(None)
             data.append(row)
         return data
 
@@ -40,8 +43,8 @@ def all_data():
     text.insert("end","품번      고객 이름     고객 전화번호  수량\n\n")
     data = data_import()
     for row in data:
-        row.pop()
-        row.pop()
+        for _ in range(4):
+            row.pop()
         text.insert("end","       ".join(row))
         text.insert("end","\n")
     
@@ -49,7 +52,7 @@ def all_data():
 def new_window():
     global new
     new = tk.Toplevel(width=1000,height=500)
-    new.geometry("900x600+600+300")
+    new.geometry("900x600")
     all_data()
 
 #데이터 편집
@@ -62,15 +65,8 @@ def data_edit():
         if data[idx][0] == code:
             data[idx][1] = e_name.get()
             data[idx][2] = e_phone_num.get()
-            try: data[idx][3] = int(e_amount.get())
-            except:
-                tk.messagebox.showerror("오류","검색 후 편집을 하시거나 수량은 숫자만 입력할 수 있습니다.")
-                return
-
-            if data[idx][3] < 0:
-                tk.messagebox.showerror("오류","수량은 숫자(>0)만 입력할 수 있습니다.")
-                return
-                
+            data[idx][3] = val.get()
+            
             data[idx][4] = file_path
             data[idx][5] = text_memo.get(1.0,"end")
             entry_all_delete()
@@ -113,32 +109,33 @@ def data_delete():
 #데이터 추가
 def add_data():
     global file_path
-       
+    data = data_import()
     try:
-        code = int(e_code.get())
+        code = e_code.get()
+        for row in data:
+            if row[0] == code:
+                tk.messagebox.showerror("오류","해당 품번은 이미 등록되어 있습니다.")
+                return
+
         name = e_name.get()
         phone = e_phone_num.get()
-        count = int(e_amount.get())
+        count = val.get()
         memo = text_memo.get(1.0,"end")
+        money = e_money.get()
+        date = str(e_date.get_date()).replace("-","/")
         if file_path == None: raise ImageError
-    except ValueError:
-        tk.messagebox.showerror("오류","품번과 수량은 숫자(>0)만 입력할 수 있습니다.")
-        return
+
     except ImageError:
         tk.messagebox.showerror("오류","이미지 등록 되어있지 않습니다.")
         return
 
-    if name == "" or phone == "":
+    if name == "" or phone == "": #고객명단 미입력시
         name = "Null"
         phone = "Null"
 
-    if code < 0 or count < 0:
-        tk.messagebox.showerror("오류","품번과 수량은 숫자(>0)만 입력할 수 있습니다.")
-        return
-    
     with open(file+"\project.csv","a",encoding="utf-8",newline='') as f:
         data = csv.writer(f)
-        data.writerow([code,name,phone,count,file_path,memo])
+        data.writerow([code,name,phone,count,file_path,memo,money,date])
         tk.messagebox.showinfo("확인","데이터가 입력되었습니다.")
 
     file_path = None
@@ -160,11 +157,17 @@ def search_data():
                 e_code.insert(0,row[0])
                 e_name.insert(0,row[1])
                 e_phone_num.insert(0,row[2])
-                e_amount.insert(0,row[3])
+                e_money.insert(0,row[6])
+                e_date.set_date(row[7])
+                if int(row[3]) == 1:
+                    ch_sell.select()
+                else:
+                    ch_sell.deselect()
                 file_path = row[4]
                 image_input()
                 try:
                     text_memo.insert("insert",row[5])
+                    text_memo.delete('insert','end')
                 except: pass
                 chk = True
                 break
@@ -184,10 +187,12 @@ def clear_entry():
     엔트리 모두 삭제
     """
     e_code.delete(0,'end')
-    e_amount.delete(0,'end')
+    ch_sell.deselect()
     e_name.delete(0,'end')
     e_phone_num.delete(0,'end')
     text_memo.delete(0.0,'end')
+    e_money.delete(0,'end')
+    e_date.set_date(date.today())
 
 def image_set():
     """
@@ -234,46 +239,60 @@ def image_delete():
 win = tk.Tk()
 
 win.title("재고관리 프로그램")
-win.geometry("1400x900+400+200")
+win.geometry("1400x900")
 win.resizable(True,True)
 image_set()
-header = ["품번","고객 이름","고객 전화번호","수량"]
+val = tk.IntVar()
+header = ["품번","고객 이름","고객 전화번호","금액","판매여부"]
 
 for i in range(len(header)):
-    tk.Label(win,text = header[i], font = ("",10,"bold")).grid(row=0,column=i*2)
+    tk.Label(win,text = header[i], font = ("함초롬돋움",12,"bold")).grid(row=0,column=i*2)
 
 for i in range(1,10,2):
     blank = tk.Label(win)
     blank.grid(row=1,column=i)
 
-tk.Label(win,text="메모",font=("",15,"bold")).place(x=750,y=130)
+tk.Label(win,text="메모",font=("함초롬돋움",15,"bold")).place(x=750,y=130)
 
 #엔트리 구현
-e_code = tk.Entry(win,width = 20)
+e_code = tk.Entry(win,width = 15,font=("",15,""))
 e_code.grid(row=1,column=0)
 
-e_name = tk.Entry(win,width = 20)
+e_name = tk.Entry(win,width = 15,font=("",15,""))
 e_name.grid(row=1,column=2)
 
-e_phone_num = tk.Entry(win,width = 20)
+e_phone_num = tk.Entry(win,width = 15,font=("",15,""))
 e_phone_num.grid(row=1,column=4)
 
-e_amount = tk.Entry(win,width = 5)
+e_money = tk.Entry(win,width=10,font=("",15,""))
+e_money.grid(row=1,column=6)
+"""
+e_amount = tk.Entry(win,width = 5,font=("",15,""))
 e_amount.grid(row=1,column=6)
-
-#메모 기능구현 x
-text_memo = tk.Text(win,width=50,height = 33,font=("",15,""))
+"""
+#메모
+text_memo = tk.Text(win,width=50,height = 33,font=("한초롬돋움",15,""))
 text_memo.place(x=750 , y=155)
 
+#판매여부 체크박스
+ch_sell = tk.Checkbutton(win, variable=val)
+ch_sell.grid(row=1,column=8)
+
+#날짜
+e_date = DateEntry(win, date_pattern='yyyy/MM/dd', firstweekday='sunday', width=12,
+                   background='skyblue', foreground='white',borderwidth=4,font=("한초롬돋움",12,""))
+e_date.grid(row=3,column=0)
+
+
 #버튼 구현
-tk.Button(win,text="추가",command = add_data).grid(row=1,column=50)
-tk.Button(win,text="검색",command = search_data).grid(row=1,column=51)
-tk.Button(win,text="전체 데이터",command = new_window).place(x=1250,y=25)
-tk.Button(win, text="사진 등록", command = image_input).place(x=30,y=100)
-tk.Button(win, text="취소", command = image_delete).place(x=100,y=100)
-tk.Button(win, text="편집", command = data_edit).grid(row=1, column=52)
-tk.Button(win, text="삭제", command = data_delete).grid(row=1, column=53)
-tk.Button(win, text="입력창 삭제", command=entry_all_delete).place(x=1160,y=25)
-tk.Button(win, text="초기화", command = data_all_delete).place(x=1340, y=25)
+tk.Button(win,text="저장", font=("함초롬돋움",12,"bold"),command = add_data).grid(row=1,column=50)
+tk.Button(win,text="검색",font=("함초롬돋움",12,"bold"),command = search_data).grid(row=1,column=51)
+tk.Button(win,text="전체 데이터",font=("함초롬돋움",12,"bold"),command = new_window).place(x=1230,y=25)
+tk.Button(win, text="사진 등록", font=("함초롬돋움",12,"bold"),command = image_input).place(x=30,y=100)
+tk.Button(win, text="취소", font=("함초롬돋움",12,"bold"),command = image_delete).place(x=120,y=100)
+tk.Button(win, text="편집", font=("함초롬돋움",12,"bold"),command = data_edit).grid(row=1, column=52)
+tk.Button(win, text="삭제", font=("함초롬돋움",12,"bold"),command = data_delete).grid(row=1, column=53)
+tk.Button(win, text="입력창 삭제", font=("함초롬돋움",12,"bold"),command=entry_all_delete).place(x=1120,y=25)
+tk.Button(win, text="초기화", font=("함초롬돋움",12,"bold"),command = data_all_delete).place(x=1340, y=25)
 
 win.mainloop()
