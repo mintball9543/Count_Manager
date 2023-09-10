@@ -63,12 +63,25 @@ def data_edit():
     code = e_code.get()
     for idx in range(len(data)):
         if data[idx][0] == code:
-            data[idx][1] = e_name.get()
-            data[idx][2] = e_phone_num.get()
+            name = e_name.get()
+            phone = e_phone_num.get()
             data[idx][3] = val.get()
-            
             data[idx][4] = file_path
             data[idx][5] = text_memo.get(1.0,"end")
+            money = e_money.get()
+            data[idx][7] = str(e_date.get_date()).replace("-","/")
+            if name == "" or phone == "": #고객명단 미입력시
+                data[idx][1] = "Null"
+                data[idx][2] = "Null"
+            else:
+                data[idx][1] = name
+                data[idx][2] = phone
+
+            if money == "":
+                data[idx][6] = 0
+            else:
+                data[idx][6]
+                
             entry_all_delete()
             chk = True
             break
@@ -132,6 +145,9 @@ def add_data():
     if name == "" or phone == "": #고객명단 미입력시
         name = "Null"
         phone = "Null"
+
+    if money == "":
+        money = 0
 
     with open(file+"\project.csv","a",encoding="utf-8",newline='') as f:
         data = csv.writer(f)
