@@ -47,13 +47,17 @@ def all_data():
             row.pop()
         text.insert("end","       ".join(row))
         text.insert("end","\n")
-    
-#새로운 창
-def new_window():
+
+#전체 데이터 목록 보여주기 위한 새로운 창
+def new_window(chk):
     global new
     new = tk.Toplevel(width=1000,height=500)
     new.geometry("900x600")
-    all_data()
+    match chk:
+        case 1:
+            all_data()
+        case 2:
+            phone_search_data()
 
 #데이터 편집
 def data_edit():
@@ -157,11 +161,39 @@ def add_data():
     file_path = None
     entry_all_delete()
 
+#고객 전화번호 기반 검색
+def phone_search_data():
+    listbox = tk.Listbox(new, selectmode='single', height=0, width=40, font=("한초롬바탕",15,""))
+    tk.Label(new, text = "품번\t고객이름  고객전화번호  금액\t날짜", font=("한초롬바탕",12,"")).grid(row=0,column=0)
+    phone = e_phone_num.get()
+    data = data_import()
+    data2 = []
+    for row in data:
+        if row[2] == phone:
+            data2.append(row)
+
+    if len(data2) == 0:
+        new.destroy()
+        tk.messagebox.showerror("에러", "입력한 전화번호는 찾을 수 없습니다.")
+        return
+    
+    for i, row in enumerate(data2):
+        listbox.insert(i, f"{row[0]}      {row[1]}      {row[2]}      {row[6]}      {row[7]}")
+
+    listbox.place(x=0, y=40)
+
 #데이터 검색
 def search_data():
     global file_path
     
     code = e_code.get()
+    phone = e_phone_num.get()
+
+    if code == "" and phone != "":
+        new_window(2)
+        return
+
+    
     chk = False
     with open(file+"\project.csv","r",encoding="utf-8",newline='') as f:
         data = csv.reader(f)
@@ -303,7 +335,7 @@ e_date.grid(row=3,column=0)
 #버튼 구현
 tk.Button(win,text="저장", font=("함초롬돋움",12,"bold"),command = add_data).grid(row=1,column=50)
 tk.Button(win,text="검색",font=("함초롬돋움",12,"bold"),command = search_data).grid(row=1,column=51)
-tk.Button(win,text="전체 데이터",font=("함초롬돋움",12,"bold"),command = new_window).place(x=1230,y=25)
+tk.Button(win,text="전체 데이터",font=("함초롬돋움",12,"bold"),command = lambda: new_window(1)).place(x=1230,y=25)
 tk.Button(win, text="사진 등록", font=("함초롬돋움",12,"bold"),command = image_input).place(x=30,y=100)
 tk.Button(win, text="취소", font=("함초롬돋움",12,"bold"),command = image_delete).place(x=120,y=100)
 tk.Button(win, text="편집", font=("함초롬돋움",12,"bold"),command = data_edit).grid(row=1, column=52)
