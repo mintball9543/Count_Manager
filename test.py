@@ -5,6 +5,7 @@ import csv
 import os
 from tkcalendar import DateEntry
 from datetime import date
+from babel import numbers
 
 
 file = "C:\count manager"
@@ -82,7 +83,7 @@ def data_edit():
                 data[idx][2] = phone
 
             if money == "":
-                data[idx][6] = 0
+                data[idx][6] = "0"
             else:
                 data[idx][6]
                 
@@ -151,7 +152,7 @@ def add_data():
         phone = "Null"
 
     if money == "":
-        money = 0
+        money = "0"
 
     with open(file+"\project.csv","a",encoding="utf-8",newline='') as f:
         data = csv.writer(f)
@@ -161,15 +162,27 @@ def add_data():
     file_path = None
     entry_all_delete()
 
+#고객 전번을 통한 품번 검색
+def phone_search_select(data):
+    sel = int(list(listbox.curselection())[0])
+    print(sel)
+    print(data[sel])
+    code = data[sel][0]
+    clear_entry()
+    e_code.insert(0,code)
+    search_data()
+
 #고객 전화번호 기반 검색
 def phone_search_data():
-    listbox = tk.Listbox(new, selectmode='single', height=0, width=40, font=("한초롬바탕",15,""))
+    global listbox
+    listbox = tk.Listbox(new, selectmode='single', height=0, width=60, font=("한초롬바탕",15,""))
+    tk.Button(new,text="선택", font=("한초롬바탕",14,"bold"), command=lambda: (phone_search_select(data))).place(x=700,y=20)
     tk.Label(new, text = "품번\t고객이름  고객전화번호  금액\t날짜", font=("한초롬바탕",12,"")).grid(row=0,column=0)
-    phone = e_phone_num.get()
+    phone = e_phone_num.get()[-4:]
     data = data_import()
     data2 = []
     for row in data:
-        if row[2] == phone:
+        if row[2][-4:] == phone:
             data2.append(row)
 
     if len(data2) == 0:
