@@ -16,6 +16,10 @@ class ImageError(Exception):
 
 #데이터 가져오기
 def data_import():
+    if not os.path.isfile(file+"\project.csv"): #파일 없을 시
+        with open(file+"\project.csv","w",encoding="utf-8",newline=''):
+            pass
+
     with open(file+"\project.csv","r",encoding="utf-8",newline='') as f:
         data = []
         for row in csv.reader(f):
@@ -41,7 +45,7 @@ def all_data():
     text = tk.Text(new,width=100,height=50)
     text.bind("<Key>", lambda a: "break")
     text.pack()
-    text.insert("end","품번      고객 이름     고객 전화번호  수량\n\n")
+    text.insert("end","품번      고객 이름     고객 전화번호  판매여부\n\n")
     data = data_import()
     for row in data:
         for _ in range(4):
@@ -130,6 +134,11 @@ def add_data():
     data = data_import()
     try:
         code = e_code.get()
+
+        if code == "":
+            tk.messagebox.showerror("오류","품번을 입력하지 않았습니다.")
+            return
+        
         for row in data:
             if row[0] == code:
                 tk.messagebox.showerror("오류","해당 품번은 이미 등록되어 있습니다.")
@@ -144,8 +153,10 @@ def add_data():
         if file_path == None: raise ImageError
 
     except ImageError:
-        tk.messagebox.showerror("오류","이미지 등록 되어있지 않습니다.")
-        return
+        if not tk.messagebox.askyesno("확인","이미지가 등록되어 있지 않습니다. 이대로 등록하시겠습니까?"):
+            return
+        else: file_path=None
+
 
     if name == "" or phone == "": #고객명단 미입력시
         name = "Null"
@@ -206,8 +217,8 @@ def search_data():
         new_window(2)
         return
 
-    
     chk = False
+    
     with open(file+"\project.csv","r",encoding="utf-8",newline='') as f:
         data = csv.reader(f)
         
@@ -225,7 +236,8 @@ def search_data():
                 else:
                     ch_sell.deselect()
                 file_path = row[4]
-                image_input()
+                if file_path != '' or file_path !=None:
+                    image_input()
                 try:
                     text_memo.insert("insert",row[5])
                     text_memo.delete('insert','end')
